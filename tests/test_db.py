@@ -19,7 +19,7 @@ def test_tables_are_created():
 
 def test_init_db_is_safe_to_run_twice():
     conn = make_db()
-    init_db(conn)  # runs on every startup, so must not fail on an existing DB
+    init_db(conn)
 
 
 def test_primary_key_rejects_duplicate_id():

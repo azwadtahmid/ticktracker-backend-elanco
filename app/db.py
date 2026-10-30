@@ -1,4 +1,3 @@
-"""SQLite connection, table creation and indexes."""
 import sqlite3
 
 DB_PATH = "tick_tracker.db"
@@ -6,7 +5,7 @@ DB_PATH = "tick_tracker.db"
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sightings (
     id         TEXT PRIMARY KEY,
-    date       TEXT NOT NULL,  -- ISO 8601, so text order = time order
+    date       TEXT NOT NULL,
     location   TEXT NOT NULL,
     species    TEXT NOT NULL,
     latin_name TEXT NOT NULL
@@ -18,8 +17,8 @@ CREATE TABLE IF NOT EXISTS sync_runs (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     started_at          TEXT NOT NULL,
     finished_at         TEXT,
-    status              TEXT NOT NULL,  -- 'success' or 'failed'
-    data_source         TEXT,           -- 'live' or 'snapshot'
+    status              TEXT NOT NULL,
+    data_source         TEXT,
     fetched             INTEGER,
     kept                INTEGER,
     duplicates          INTEGER,
@@ -31,7 +30,7 @@ CREATE TABLE IF NOT EXISTS sync_runs (
 CREATE TABLE IF NOT EXISTS rejected_records (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     sync_run_id INTEGER NOT NULL REFERENCES sync_runs(id),
-    raw         TEXT NOT NULL,  -- the original record as JSON
+    raw         TEXT NOT NULL,
     reason      TEXT NOT NULL
 );
 """
@@ -39,7 +38,7 @@ CREATE TABLE IF NOT EXISTS rejected_records (
 
 def connect(path=DB_PATH):
     conn = sqlite3.connect(path)
-    conn.row_factory = sqlite3.Row  # rows behave like dicts: row["location"]
+    conn.row_factory = sqlite3.Row
     return conn
 
 

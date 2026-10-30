@@ -17,17 +17,15 @@ def raw(**overrides):
     return record
 
 
-# --- locations ---
-
 @pytest.mark.parametrize("value, expected", [
     ("London", ("London", False)),
     (" london ", ("London", False)),
     ("LONDON", ("London", False)),
-    ("Londn", ("London", True)),          # typo fixed and flagged
+    ("Londn", ("London", True)),
     ("Leicster", ("Leicester", True)),
-    ("Leeds", ("Leeds", False)),          # exact match wins, never confused with Leicester
-    ("Newport", ("Newport", False)),      # real city, not close enough to Newcastle
-    ("Bath", ("Bath", False)),            # unknown real city kept as sent
+    ("Leeds", ("Leeds", False)),
+    ("Newport", ("Newport", False)),
+    ("Bath", ("Bath", False)),
     (None, ("Unknown", False)),
     ("   ", ("Unknown", False)),
 ])
@@ -35,12 +33,10 @@ def test_clean_location(value, expected):
     assert clean_location(value) == expected
 
 
-# --- dates ---
-
 @pytest.mark.parametrize("value, expected", [
     ("2022-08-01T06:40:31", "2022-08-01T06:40:31"),
     ("2022-08-01 06:40:31", "2022-08-01T06:40:31"),
-    ("01/08/2022", "2022-08-01T00:00:00"),   # UK day-first: 1st of August
+    ("01/08/2022", "2022-08-01T00:00:00"),
     ("not a date", None),
     ("", None),
     (None, None),
@@ -49,8 +45,6 @@ def test_clean_location(value, expected):
 def test_parse_date(value, expected):
     assert parse_date(value) == expected
 
-
-# --- single records ---
 
 def test_clean_record_keeps_good_record():
     record, reason, corrected = clean_record(raw())
@@ -88,8 +82,6 @@ def test_species_and_latin_name_fill_each_other():
     both_missing = clean_record(raw(species=None, latinName=None))[0]
     assert both_missing["species"] == "Unknown" and both_missing["latin_name"] == "Unknown"
 
-
-# --- whole fetch ---
 
 def test_duplicate_identical_after_cleaning_kept_once():
     result = clean_all([raw(location="Leeds"), raw(location="Leeds ")])
