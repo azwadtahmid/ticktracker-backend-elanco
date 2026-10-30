@@ -7,9 +7,10 @@ from datetime import datetime
 import httpx
 
 from app.cleaning import clean_all
+from app.db import PROJECT_DIR
 
 ELANCO_API_URL = os.environ.get("ELANCO_API_URL", "https://dev-task.elancoapps.com/data/tick-sightings")
-SEED_PATH = "data/seed.json"
+SEED_PATH = PROJECT_DIR / "data" / "seed.json"
 TIMEOUT_SECONDS = 10
 RETRY_DELAYS = [1, 2]
 

@@ -3,6 +3,7 @@ import json
 import pytest
 
 from app.cleaning import clean_all, clean_location, clean_record, parse_date
+from app.sync import SEED_PATH
 
 
 def raw(**overrides):
@@ -102,7 +103,7 @@ def test_clean_all_counts_rejections_and_corrections():
 
 
 def test_real_snapshot_is_clean():
-    with open("data/seed.json", encoding="utf-8") as f:
+    with open(SEED_PATH, encoding="utf-8") as f:
         records = json.load(f)
     result = clean_all(records)
     assert len(result["kept"]) == 1000

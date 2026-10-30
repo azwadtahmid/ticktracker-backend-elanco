@@ -2,7 +2,13 @@ import sqlite3
 
 import pytest
 
-from app.db import connect, init_db
+from app.db import DB_PATH, connect, init_db
+from app.sync import SEED_PATH
+
+
+def test_file_paths_do_not_depend_on_current_folder():
+    assert DB_PATH.is_absolute() and SEED_PATH.is_absolute()
+    assert SEED_PATH.exists()
 
 
 def make_db():
