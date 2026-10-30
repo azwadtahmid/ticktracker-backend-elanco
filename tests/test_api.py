@@ -53,6 +53,17 @@ def test_date_range_end_is_inclusive(client):
     assert ids(client.get("/sightings?start=2023-06-01&end=2023-08-31")) == ["c", "b", "a"]
 
 
+def test_dates_without_leading_zeros_are_accepted(client):
+    assert ids(client.get("/sightings?start=2023-6-1&end=2023-8-31")) == ["c", "b", "a"]
+
+
+@pytest.mark.parametrize("value", ["banana", "2023/06/01", "01-06-2023", "2023-13-01"])
+def test_bad_date_explains_the_format(client, value):
+    response = client.get("/sightings", params={"start": value})
+    assert response.status_code == 422
+    assert "2024-01-01" in response.json()["detail"]
+
+
 @pytest.mark.parametrize("location", ["London", "london", " LONDON ", "Londn"])
 def test_location_filter_uses_cleaning_rules(client, location):
     assert ids(client.get("/sightings", params={"location": location})) == ["b", "a"]
@@ -67,7 +78,7 @@ def test_paging_keeps_total_count(client):
     assert body["count"] == 4 and [r["id"] for r in body["results"]] == ["c"]
 
 
-@pytest.mark.parametrize("query", ["start=banana", "limit=5000", "limit=0", "offset=-1"])
+@pytest.mark.parametrize("query", ["limit=5000", "limit=0", "offset=-1"])
 def test_bad_input_is_rejected(client, query):
     assert client.get(f"/sightings?{query}").status_code == 422
 

@@ -1,6 +1,6 @@
 import json
 from contextlib import asynccontextmanager
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Literal
 
 import httpx
@@ -57,14 +57,21 @@ def wrap(conn, results, count=None):
     }
 
 
+def query_date(value, name):
+    try:
+        return datetime.strptime(value.strip(), "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"{name} must be a date like 2024-01-01, got {value!r}")
+
+
 def filters(start, end, location, species):
     where, params = [], []
     if start:
         where.append("date >= ?")
-        params.append(start.isoformat())
+        params.append(query_date(start, "start").isoformat())
     if end:
         where.append("date < ?")
-        params.append((end + timedelta(days=1)).isoformat())
+        params.append((query_date(end, "end") + timedelta(days=1)).isoformat())
     if location:
         where.append("LOWER(location) = LOWER(?)")
         params.append(clean_location(location)[0])
@@ -98,8 +105,8 @@ def risk_level(count, usual):
 
 @app.get("/sightings")
 def search_sightings(
-    start: date | None = None,
-    end: date | None = None,
+    start: str | None = None,
+    end: str | None = None,
     location: str | None = None,
     species: str | None = None,
     limit: int = Query(100, ge=1, le=1000),
@@ -123,7 +130,7 @@ def get_sighting(sighting_id: str, conn=Depends(get_conn)):
 
 
 @app.get("/reports/regions")
-def sightings_per_region(start: date | None = None, end: date | None = None, conn=Depends(get_conn)):
+def sightings_per_region(start: str | None = None, end: str | None = None, conn=Depends(get_conn)):
     where, params = filters(start, end, None, None)
     rows = conn.execute(
         f"SELECT location, COUNT(*) AS count FROM sightings{where} GROUP BY location ORDER BY count DESC, location",
@@ -135,8 +142,8 @@ def sightings_per_region(start: date | None = None, end: date | None = None, con
 @app.get("/reports/trends")
 def trends(
     interval: Literal["week", "month"] = "month",
-    start: date | None = None,
-    end: date | None = None,
+    start: str | None = None,
+    end: str | None = None,
     location: str | None = None,
     species: str | None = None,
     conn=Depends(get_conn),
