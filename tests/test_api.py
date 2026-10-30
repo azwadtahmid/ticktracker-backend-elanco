@@ -53,11 +53,12 @@ def test_date_range_end_is_inclusive(client):
     assert ids(client.get("/sightings?start=2023-06-01&end=2023-08-31")) == ["c", "b", "a"]
 
 
-def test_dates_without_leading_zeros_are_accepted(client):
-    assert ids(client.get("/sightings?start=2023-6-1&end=2023-8-31")) == ["c", "b", "a"]
+@pytest.mark.parametrize("start, end", [("2023-6-1", "2023-8-31"), ("2023/6/1", "2023/08/31")])
+def test_year_first_dates_with_dashes_or_slashes_are_accepted(client, start, end):
+    assert ids(client.get("/sightings", params={"start": start, "end": end})) == ["c", "b", "a"]
 
 
-@pytest.mark.parametrize("value", ["banana", "2023/06/01", "01-06-2023", "2023-13-01"])
+@pytest.mark.parametrize("value", ["banana", "01/06/2023", "01-06-2023", "2023-13-01"])
 def test_bad_date_explains_the_format(client, value):
     response = client.get("/sightings", params={"start": value})
     assert response.status_code == 422

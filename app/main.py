@@ -58,10 +58,12 @@ def wrap(conn, results, count=None):
 
 
 def query_date(value, name):
-    try:
-        return datetime.strptime(value.strip(), "%Y-%m-%d").date()
-    except ValueError:
-        raise HTTPException(status_code=422, detail=f"{name} must be a date like 2024-01-01, got {value!r}")
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(value.strip(), fmt).date()
+        except ValueError:
+            pass
+    raise HTTPException(status_code=422, detail=f"{name} must be a date like 2024-01-01 or 2024/1/1, got {value!r}")
 
 
 def filters(start, end, location, species):
