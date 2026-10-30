@@ -28,6 +28,11 @@ PERIOD_SQL = {
     "week": "date(date, '-6 days', 'weekday 1')",
 }
 
+RISK_WINDOW_MONTHS = 3
+HIGH_RATIO = 1.5
+LOW_RATIO = 0.5
+LOW_DATA_BELOW = 1
+
 
 def get_conn():
     conn = db.connect()
@@ -73,6 +78,22 @@ def next_period(period, interval):
     if interval == "week":
         return period + timedelta(days=7)
     return date(period.year + period.month // 12, period.month % 12 + 1, 1)
+
+
+def shift_month(month, by):
+    total = int(month[:4]) * 12 + int(month[5:7]) - 1 + by
+    return f"{total // 12:04d}-{total % 12 + 1:02d}"
+
+
+def risk_level(count, usual):
+    if usual == 0:
+        return "high" if count else "normal"
+    ratio = count / usual
+    if ratio >= HIGH_RATIO:
+        return "high"
+    if ratio <= LOW_RATIO:
+        return "low"
+    return "normal"
 
 
 @app.get("/sightings")
@@ -133,6 +154,45 @@ def trends(
         while period <= last:
             results.append({"period": period.isoformat(), "count": counts.get(period.isoformat(), 0)})
             period = next_period(period, interval)
+    return wrap(conn, results)
+
+
+@app.get("/reports/risk")
+def risk(conn=Depends(get_conn)):
+    rows = conn.execute(
+        "SELECT location, substr(date, 1, 7) AS month, COUNT(*) AS count FROM sightings"
+        " WHERE location != 'Unknown' GROUP BY location, month"
+    ).fetchall()
+    if not rows:
+        return wrap(conn, [])
+    counts = {(r["location"], r["month"]): r["count"] for r in rows}
+    first = min(month for _, month in counts)
+    latest = max(month for _, month in counts)
+    window = [shift_month(latest, -i) for i in range(RISK_WINDOW_MONTHS)]
+
+    years_back = 0
+    while shift_month(window[-1], -12 * (years_back + 1)) >= first:
+        years_back += 1
+
+    results = []
+    for city in sorted({city for city, _ in counts}):
+        count = sum(counts.get((city, month), 0) for month in window)
+        past = sum(
+            counts.get((city, shift_month(month, -12 * years)), 0)
+            for month in window
+            for years in range(1, years_back + 1)
+        )
+        usual = past / years_back if years_back else 0
+        results.append({
+            "location": city,
+            "window": f"{window[-1]} to {window[0]}",
+            "count": count,
+            "usual": round(usual, 2),
+            "ratio": round(count / usual, 2) if usual else None,
+            "level": risk_level(count, usual),
+            "low_data": usual < LOW_DATA_BELOW,
+        })
+    results.sort(key=lambda r: (-r["count"], r["location"]))
     return wrap(conn, results)
 
 
