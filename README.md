@@ -2,6 +2,8 @@
 
 A backend for a UK tick-sighting tracker, written in Python with FastAPI and SQLite by Azwad Tahmid.
 
+Walkthrough video: https://youtu.be/YfWWgTXJ4wg
+
 ## Features
 
 - Fetches all sightings from the Elanco Tick Sightings API when the server starts, and retries on timeouts, rate limits (429) and server errors (5xx).
