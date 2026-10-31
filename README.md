@@ -64,6 +64,10 @@ To run the tests (use `.venv/bin/python` on Mac / Linux):
 
 There are 82 tests. They use a fake Elanco, so they don't need the internet.
 
+![First half of the test run](docs/images/tests-passing-1.png)
+
+![Second half of the test run, ending in 82 passed](docs/images/tests-passing-2.png)
+
 ## Endpoints
 
 | Endpoint | What it returns |
@@ -124,6 +128,10 @@ On Mac / Linux:
 ```bash
 ELANCO_API_URL=https://dev-task.elancoapps.com/data/wrong .venv/bin/python -m uvicorn app.main:app
 ```
+
+The sync fails with a 404, but the server still starts and `/sightings` still returns data:
+
+![Server starting after a failed sync](docs/images/sync-failure.png)
 
 ## Project structure
 
